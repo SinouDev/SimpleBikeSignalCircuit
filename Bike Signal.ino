@@ -17,6 +17,20 @@
 #define PRE_RIGHT_STATE     0x40
 #define PRE_LR_STATE        0x80
 
+uint8_t output_state = 0;
+
+uint32_t counter1 = 0U;
+uint32_t counter2 = 0U;
+uint32_t counter3 = 0U;
+uint32_t counter4 = 0U;
+uint64_t counter5 = 0ULL;
+uint32_t last_counter = 0U;
+
+constexpr uint32_t module_frequincy = 16000000U;
+
+constexpr uint32_t counter_up1 = module_frequincy /   6400U; // assuming that the frequincy is fixed at 16MHz
+constexpr uint32_t counter_up2 = module_frequincy /  64000U;
+
 void setup()
 {
   pinMode(LEFT_SGN, INPUT);
@@ -27,26 +41,29 @@ void setup()
   pinMode(LEFT_TRN, OUTPUT);
   pinMode(RIGHT_TRN, OUTPUT);
   pinMode(STOP_TRN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  cli();
+  TCCR0A = 0;
+  TCCR0B = 0;
+  TCNT0  = 0;
+  
+  OCR0A = 255;
+
+  TCCR0A |= (1 << WGM01);
+  
+  TCCR0B |= (1 << CS01);   
+  
+  TIMSK0 |= (1 << OCIE0A);
+  sei();
 
   //Serial.begin(2000000);
 }
 
-uint8_t output_state = 0;
+bool tr = false;
 
-uint32_t counter1 = 0U;
-uint32_t counter2 = 0U;
-uint32_t counter3 = 0U;
-uint32_t counter4 = 0U;
-
-constexpr uint32_t module_frequincy = 16000000U;
-
-constexpr uint32_t counter_up1 = module_frequincy /   5000U; // assuming that the frequincy is fixed at 16MHz
-constexpr uint32_t counter_up2 = module_frequincy /   6400U;
-constexpr uint32_t counter_up3 = module_frequincy /  64000U;
-
-void loop()
+ISR(TIMER0_COMPA_vect)
 {
-
   output_state = digitalRead(LR_SGN) ? TURNING_STATE_LR | output_state : ~TURNING_STATE_LR & output_state;
 
   if((output_state & TURNING_STATE_LR) != (PRE_LR_STATE & output_state)) // reset both counters for left and right signal beforehand
@@ -82,12 +99,12 @@ void loop()
   
   if(digitalRead(STOP_SGN))
   {
-    if(counter3 % counter_up2 == 0)
+    if(counter3 % counter_up1 == 0)
       output_state = output_state & STOPPING_STATE ? ~STOPPING_STATE & output_state : STOPPING_STATE | output_state;
 
     if(output_state & STOPPING_STATE)
     {
-      if(counter4 % counter_up3 == 0)
+      if(counter4 % counter_up2 == 0)
         output_state = output_state & STOPPING_STATE_FLKR ? ~STOPPING_STATE_FLKR & output_state : STOPPING_STATE_FLKR | output_state;
       counter4++;
     }
@@ -102,11 +119,18 @@ void loop()
     counter3 = 0;
     counter4 = 0;
   }
+}
 
+void loop()
+{
   digitalWrite(LEFT_TRN, output_state & TURNING_STATE_LEFT);
   digitalWrite(RIGHT_TRN, output_state & TURNING_STATE_RIGHT);
   digitalWrite(STOP_TRN, output_state & STOPPING_STATE_FLKR);
   
   //Serial.print("outout_state = 0b");
-  //Serial.println(output_state, BIN);  
+  //for (int32_t i = 0; i < sizeof(output_state) * 8; i++)
+  //{
+  //  Serial.print((output_state >> i) & 1 ? "1" : "0");
+  //}
+  //Serial.println();  
 }
