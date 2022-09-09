@@ -43,7 +43,7 @@ void setup()
   pinMode(STOP_TRN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
-  cli();
+  cli(); // clear interrupts
   TCCR0A = 0;
   TCCR0B = 0;
   TCNT0  = 0;
@@ -55,7 +55,7 @@ void setup()
   TCCR0B |= (1 << CS01);   
   
   TIMSK0 |= (1 << OCIE0A);
-  sei();
+  sei(); // enable interrupts
 
   //Serial.begin(2000000);
 }
