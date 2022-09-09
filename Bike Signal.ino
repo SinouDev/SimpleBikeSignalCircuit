@@ -7,6 +7,16 @@
 #define RIGHT_TRN 0x07
 #define STOP_TRN  0x06
 
+#define UNKNOWN_STATE       0x00
+#define TURNING_STATE_LEFT  0x01
+#define TURNING_STATE_RIGHT 0x02
+#define TURNING_STATE_LR    0x04
+#define STOPPING_STATE      0x08
+#define STOPPING_STATE_FLKR 0x10
+#define PRE_LEFT_STATE      0x20
+#define PRE_RIGHT_STATE     0x40
+#define PRE_LR_STATE        0x80
+
 void setup()
 {
   pinMode(LEFT_SGN, INPUT);
@@ -17,70 +27,68 @@ void setup()
   pinMode(LEFT_TRN, OUTPUT);
   pinMode(RIGHT_TRN, OUTPUT);
   pinMode(STOP_TRN, OUTPUT);
+
+  //Serial.begin(2000000);
 }
 
-bool turning_state_left = LOW;
-bool turning_state_right = LOW;
-bool stopping_state = LOW;
-bool stopping_state_flkr = LOW;
-bool pre_lr_state = LOW;
+uint8_t output_state = 0;
 
-uint32_t counter1 = 0;
-uint32_t counter2 = 0;
-uint32_t counter3 = 0;
-uint32_t counter4 = 0;
+uint32_t counter1 = 0U;
+uint32_t counter2 = 0U;
+uint32_t counter3 = 0U;
+uint32_t counter4 = 0U;
 
-constexpr uint32_t counter_up = 16000000 / 4000; // assuming that the frequincy is fixed at 16MHz
+constexpr uint32_t module_frequincy = 16000000U;
+
+constexpr uint32_t counter_up1 = module_frequincy /   5000U; // assuming that the frequincy is fixed at 16MHz
+constexpr uint32_t counter_up2 = module_frequincy /   6400U;
+constexpr uint32_t counter_up3 = module_frequincy /  64000U;
 
 void loop()
 {
 
-  bool lr_state = digitalRead(LR_SGN);
+  output_state = digitalRead(LR_SGN) ? TURNING_STATE_LR | output_state : ~TURNING_STATE_LR & output_state;
 
-  if(lr_state != pre_lr_state) // reset both counters for left and right signal beforehand
+  if((output_state & TURNING_STATE_LR) != (PRE_LR_STATE & output_state)) // reset both counters for left and right signal beforehand
   {
-    pre_lr_state = lr_state;
+    output_state = output_state & TURNING_STATE_LR ? PRE_LR_STATE | output_state : ~PRE_LR_STATE & output_state;
     counter1 = 0;
     counter2 = 0;
-    turning_state_left = HIGH;
-    turning_state_right = HIGH;
   }
 
-  if(digitalRead(LEFT_SGN) || lr_state)
+  if(digitalRead(LEFT_SGN) || output_state & PRE_LR_STATE)
   {
-    if(counter1 % counter_up == 0)
-      digitalWrite(LEFT_TRN, turning_state_left = !turning_state_left);
+    if(counter1 % counter_up1 == 0)
+      output_state = output_state & TURNING_STATE_LEFT ? ~TURNING_STATE_LEFT & output_state : TURNING_STATE_LEFT | output_state;
     counter1++;
   }
   else
   {
-    digitalWrite(LEFT_TRN, turning_state_left = LOW);
+    output_state &= ~TURNING_STATE_LEFT;
     counter1 = 0;
   }
 
-  if(digitalRead(RIGHT_SGN) || lr_state)
+  if(digitalRead(RIGHT_SGN) || output_state & PRE_LR_STATE)
   {
-    if(counter2 % counter_up == 0)
-      digitalWrite(RIGHT_TRN, turning_state_right = !turning_state_right);
+    if(counter2 % counter_up1 == 0)
+      output_state = output_state & TURNING_STATE_RIGHT ? ~TURNING_STATE_RIGHT & output_state : TURNING_STATE_RIGHT | output_state;
     counter2++;
   }
   else 
   {
-    digitalWrite(RIGHT_TRN, turning_state_right = LOW);
+    output_state &= ~TURNING_STATE_RIGHT;
     counter2 = 0;
   }
   
   if(digitalRead(STOP_SGN))
   {
-    if(counter3 % 6000 == 0)
-    {
-      stopping_state = !stopping_state;
-    }
+    if(counter3 % counter_up2 == 0)
+      output_state = output_state & STOPPING_STATE ? ~STOPPING_STATE & output_state : STOPPING_STATE | output_state;
 
-    if(stopping_state)
+    if(output_state & STOPPING_STATE)
     {
-      if(counter4 % 500 == 0)
-        digitalWrite(STOP_TRN, stopping_state_flkr = !stopping_state_flkr);
+      if(counter4 % counter_up3 == 0)
+        output_state = output_state & STOPPING_STATE_FLKR ? ~STOPPING_STATE_FLKR & output_state : STOPPING_STATE_FLKR | output_state;
       counter4++;
     }
     else 
@@ -90,9 +98,15 @@ void loop()
   }
   else
   {
-    digitalWrite(STOP_TRN, stopping_state_flkr = LOW);
-    stopping_state = LOW;
+    output_state &= ~STOPPING_STATE_FLKR;    
     counter3 = 0;
     counter4 = 0;
   }
+
+  digitalWrite(LEFT_TRN, output_state & TURNING_STATE_LEFT);
+  digitalWrite(RIGHT_TRN, output_state & TURNING_STATE_RIGHT);
+  digitalWrite(STOP_TRN, output_state & STOPPING_STATE_FLKR);
+  
+  //Serial.print("outout_state = 0b");
+  //Serial.println(output_state, BIN);  
 }
