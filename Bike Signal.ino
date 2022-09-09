@@ -1,11 +1,11 @@
-#define LEFT_SGN  0x0C /* The left pin 12 input switch */
-#define RIGHT_SGN 0x0B /* The right pin 11 input switch */
-#define STOP_SGN  0x0A /* The stop pin 11 input switch */
-#define LR_SGN    0x09 /* The left right 10 pin input switch */
+#define LEFT_SGN            0x0C /* The left pin 12 input switch */
+#define RIGHT_SGN           0x0B /* The right pin 11 input switch */
+#define STOP_SGN            0x0A /* The stop pin 11 input switch */
+#define LR_SGN              0x09 /* The left right 10 pin input switch */
 
-#define LEFT_TRN  0x08 /* The left pin 08 light indicator */
-#define RIGHT_TRN 0x07 /* The right pin 07 light indicator */
-#define STOP_TRN  0x06 /* The stop pin 06 light indicator */
+#define LEFT_TRN            0x08 /* The left pin 08 light indicator */
+#define RIGHT_TRN           0x07 /* The right pin 07 light indicator */
+#define STOP_TRN            0x06 /* The stop pin 06 light indicator */
 
 #define UNKNOWN_STATE       0x00 /* Not in use for now */
 #define TURNING_STATE_LEFT  0x01 /* The left indicator state flag : 1 for HIGH and 0 for LOW */
