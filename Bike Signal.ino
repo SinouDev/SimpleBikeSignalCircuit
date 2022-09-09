@@ -1,35 +1,33 @@
-#define LEFT_SGN  0x0C
-#define RIGHT_SGN 0x0B
-#define STOP_SGN  0x0A
-#define LR_SGN    0x09
+#define LEFT_SGN  0x0C /* The left pin 12 input switch */
+#define RIGHT_SGN 0x0B /* The right pin 11 input switch */
+#define STOP_SGN  0x0A /* The stop pin 11 input switch */
+#define LR_SGN    0x09 /* The left right 10 pin input switch */
 
-#define LEFT_TRN  0x08
-#define RIGHT_TRN 0x07
-#define STOP_TRN  0x06
+#define LEFT_TRN  0x08 /* The left pin 08 light indicator */
+#define RIGHT_TRN 0x07 /* The right pin 07 light indicator */
+#define STOP_TRN  0x06 /* The stop pin 06 light indicator */
 
-#define UNKNOWN_STATE       0x00
-#define TURNING_STATE_LEFT  0x01
-#define TURNING_STATE_RIGHT 0x02
-#define TURNING_STATE_LR    0x04
-#define STOPPING_STATE      0x08
-#define STOPPING_STATE_FLKR 0x10
-#define PRE_LEFT_STATE      0x20
-#define PRE_RIGHT_STATE     0x40
-#define PRE_LR_STATE        0x80
+#define UNKNOWN_STATE       0x00 /* Not in use for now */
+#define TURNING_STATE_LEFT  0x01 /* The left indicator state flag : 1 for HIGH and 0 for LOW */
+#define TURNING_STATE_RIGHT 0x02 /* The right indicator state flag : 1 for HIGH and 0 for LOW */
+#define TURNING_STATE_LR    0x04 /* The both left and right indicators state flag : 1 for HIGH and 0 for LOW */
+#define STOPPING_STATE      0x08 /* The stop signal state flag : 1 for HIGH and 0 for LOW */
+#define STOPPING_STATE_FLKR 0x10 /* The stop flickering signal state flag : 1 for HIGH and 0 for LOW */
+#define PRE_LEFT_STATE      0x20 /* The left previous indicator state flag : 1 for HIGH and 0 for LOW */
+#define PRE_RIGHT_STATE     0x40 /* The right previous indicator state flag : 1 for HIGH and 0 for LOW */
+#define PRE_LR_STATE        0x80 /* The both left and right previous indicator state flag : 1 for HIGH and 0 for LOW */
 
-uint8_t output_state = 0;
+uint8_t output_state = 0; // state flags storage
 
-uint32_t counter1 = 0U;
-uint32_t counter2 = 0U;
-uint32_t counter3 = 0U;
-uint32_t counter4 = 0U;
-uint64_t counter5 = 0ULL;
-uint32_t last_counter = 0U;
+uint32_t counter1 = 0U; // the left indicator counter
+uint32_t counter2 = 0U; // the right indicator counter
+uint32_t counter3 = 0U; // the stop signal counter
+uint32_t counter4 = 0U; // the stop flickering counter
 
-constexpr uint32_t module_frequincy = 16000000U;
+constexpr uint32_t module_frequency = 16000000U; // arduino nano atmega328p frequency at 16MHz
 
-constexpr uint32_t counter_up1 = module_frequincy /   6400U; // assuming that the frequincy is fixed at 16MHz
-constexpr uint32_t counter_up2 = module_frequincy /  64000U;
+constexpr uint32_t counter_up1 = module_frequency /  6400U;
+constexpr uint32_t counter_up2 = module_frequency / 64000U;
 
 void setup()
 {
